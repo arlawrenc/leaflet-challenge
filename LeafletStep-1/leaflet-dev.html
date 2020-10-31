@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Quick Start - Leaflet</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<script>
+		const url ="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
+		// -121.5934982,36.8596649,5.92
+		var latitude=-121.5934982;
+		var longitude=36.8596649;
+		$(document).ready(getData(9));
+		var point1 = [0,0];
+		var point2 = [0,0];
+		var GV_DATA=null;
+		
+		function getData(idx)
+		{
+			$.get(url, function (content){
+				GV_DATA=content;
+	
+				//longitude=content.features[idx].geometry.coordinates[1];
+				//latitude=content.features[idx].geometry.coordinates[0];
+				point1 = content.features[idx].geometry.coordinates;
+				point2 = content.features[idx+1].geometry.coordinates;
+				//alert(point1);
+				drawMap();
+				//alert(content.features[idx].properties.place+") "+longitude+"/"+ latitude);
+			})
+		}
+		function redraw()
+		{
+			var idx = prompt ("IDX");
+			getData(idx);
+		}
+
+	function drawMap()
+	{
+		var mymap = L.map('mapid').setView([longitude, latitude], 5);
+	//https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw
+		L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+				'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+			id: 'mapbox/streets-v11',
+			tileSize: 512,
+			zoomOffset: -1
+		}).addTo(mymap);
+	/*
+		L.marker([longitude, latitude],500).addTo(mymap)
+			.bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
+	*/
+		for (var i in GV_DATA.features)
+		{
+			const mag = GV_DATA.features[i].properties.mag;
+			var color="green";
+			var size= 20000;
+
+			if (mag <1){
+				color="#42f569"
+			}
+			else if(mag<3){
+				color="yellow";
+				size=35000;
+			}
+			else{
+				color="#eb8034";
+				size=65000;
+			}
+
+			const coord = GV_DATA.features[i].geometry.coordinates;
+			L.circle([coord[1], coord[0]], size, {
+				color: "#3474eb",
+				fillColor: color,
+				fillOpacity: 0.9
+			}).addTo(mymap).bindPopup(GV_DATA.features[i].properties.place);
+		}
+
+	/*
+		L.polygon([
+			[51.509, -0.08],
+			[51.503, -0.06],
+			[51.51, -0.047]
+		]).addTo(mymap).bindPopup("I am a polygon.");
+	*/
+		var popup = L.popup();
+	}
+</script>
+</head>
+<body>
+<button onclick="redraw()">Redraw</button>
+<div id="mapid" style="width: 1000px; height: 600px;"></div>
+</body>
+</html>
